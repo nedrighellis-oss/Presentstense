@@ -1,0 +1,591 @@
+<title>Presents Tense</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Christmas gift finder: take a 20-second quiz or describe the person, and get gift ideas that actually fit them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a pine-green "shop awning" band with falling snow on top; below it a gift-tag form on the left and the results shelf on the right. Guides reuse the shelf as a ranked list. */
+:root{
+  --bg:#F5F8F5; --paper:#FFFFFF; --ink:#12291F; --muted:#557063; --line:#D5E1D9; --chip:#E6EEE8;
+  --accent:#B11E3A; --accent-ink:#FFFFFF; --accent-soft:#F7E2E6; --gold:#9C7420;
+  --band:#123524; --band-ink:#F3EFE4; --band-muted:#B9CDBF; --band-gold:#E2B95B;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B1A13; --paper:#12271D; --ink:#EDF3EE; --muted:#9DB5A8; --line:#24402F; --chip:#1B3327;
+  --accent:#F0566F; --accent-ink:#1C0A0E; --accent-soft:#3A1820; --gold:#E2B95B;
+  --band:#081310; --band-ink:#F3EFE4; --band-muted:#9DB5A8; --band-gold:#E2B95B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1A13; --paper:#12271D; --ink:#EDF3EE; --muted:#9DB5A8; --line:#24402F; --chip:#1B3327;
+  --accent:#F0566F; --accent-ink:#1C0A0E; --accent-soft:#3A1820; --gold:#E2B95B;
+  --band:#081310; --band-ink:#F3EFE4; --band-muted:#9DB5A8; --band-gold:#E2B95B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.in{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* band */
+.band{background:var(--band);color:var(--band-ink);position:relative;overflow:hidden}
+.band canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.band .in{position:relative;padding-block:22px 26px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px}
+.brand{font-family:var(--display);font-size:1.5rem;line-height:1;color:var(--band-ink);text-decoration:none}
+.brand em{font-style:normal;color:var(--band-gold)}
+nav{display:flex;flex-wrap:wrap;gap:4px}
+nav a{color:var(--band-muted);text-decoration:none;font-weight:600;font-size:.92rem;padding:6px 10px;border-radius:7px}
+nav a:hover{color:var(--band-ink)}
+nav a[aria-current="page"]{color:var(--band-ink);background:rgba(255,255,255,.1)}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,5.2vw,3.4rem);line-height:1.05;margin:0;max-width:18ch;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--band-gold)}
+.hero p{margin:10px 0 0;color:var(--band-muted);max-width:52ch}
+.count{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--band-gold);font-variant-numeric:tabular-nums}
+.ribbon{height:6px;background:repeating-linear-gradient(135deg,var(--accent) 0 14px,var(--band-ink) 14px 28px);opacity:.9}
+
+main .in{padding-block:26px 40px}
+.grid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:24px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+
+/* gift tag form */
+.tag{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px 20px 20px;position:relative;min-width:0}
+.tag::before{content:"";position:absolute;top:12px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--bg);border:2px solid var(--gold)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--chip);border-radius:10px;padding:4px;margin:14px 0 18px}
+.tabs button{font:600 .92rem var(--body);border:0;border-radius:7px;padding:9px;background:transparent;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+fieldset{border:0;margin:0 0 16px;padding:0}
+legend,.lbl{font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{font-size:.88rem;padding:6px 11px;border-radius:999px;background:var(--chip);cursor:pointer;user-select:none;border:1px solid transparent}
+.chips input:checked+label{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+textarea{width:100%;min-height:150px;font:inherit;font-size:.98rem;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:.85rem;color:var(--muted);margin:8px 0 12px}
+.examples{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.examples button{font:500 .84rem var(--body);background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:7px 10px;cursor:pointer;text-align:left}
+.examples button:hover{color:var(--ink);border-color:var(--muted)}
+.go{width:100%;font:700 1rem var(--body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:13px;cursor:pointer}
+.go:hover{filter:brightness(1.06)}
+.go:disabled{opacity:.7;cursor:progress}
+.aiflag{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin:-6px 0 14px}
+.aiflag b{color:var(--gold);font-family:var(--mono);font-weight:500;letter-spacing:.05em;font-size:.72rem;text-transform:uppercase;border:1px solid var(--gold);border-radius:5px;padding:1px 5px}
+
+/* results */
+.shelf{min-width:0}
+.summary{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.summary h2{font-family:var(--display);font-weight:400;font-size:1.6rem;margin:0;text-wrap:balance;line-height:1.2}
+.summary p{margin:0;color:var(--muted);font-size:.92rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.top{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.price{font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums;color:var(--muted)}
+.badge{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:3px 7px;border-radius:5px}
+.card h3{font-size:1.06rem;margin:0;line-height:1.3}
+.card p{margin:0;font-size:.92rem;color:var(--muted)}
+.why{font-size:.84rem;color:var(--ink);background:var(--chip);border-radius:7px;padding:6px 9px}
+.why b{font-weight:600}
+.buy{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;font-weight:600;font-size:.9rem;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:8px}
+.buy:hover{background:var(--accent-soft)}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:28px;color:var(--muted)}
+.thinking{display:flex;align-items:center;gap:10px;color:var(--muted);padding:22px 0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){
+  .dot{animation:blink 1s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .card{animation:rise .35s ease both}@keyframes rise{from{transform:translateY(6px)}to{transform:none}}
+}
+
+/* guides */
+.gwrap{max-width:860px}
+.crumb{font-size:.85rem;color:var(--muted);margin-bottom:10px}
+.crumb a{color:var(--muted)}
+.gwrap h1{font-family:var(--display);font-weight:400;font-size:clamp(1.9rem,4.5vw,2.7rem);line-height:1.1;margin:0 0 10px;text-wrap:balance}
+.lede{font-size:1.06rem;max-width:62ch;margin:0 0 6px}
+.meta{font-family:var(--mono);font-size:.76rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:22px}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:r}
+.rank li{counter-increment:r;display:grid;grid-template-columns:44px 1fr auto;gap:6px 14px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px}
+.rank li::before{content:counter(r);font-family:var(--display);font-size:1.6rem;line-height:1;color:var(--accent)}
+.rank h3{margin:0 0 4px;font-size:1.08rem}
+.rank p{margin:0;color:var(--muted);font-size:.94rem;max-width:58ch}
+.rank .side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.rank .buy{white-space:nowrap}
+@media (max-width:560px){.rank li{grid-template-columns:34px 1fr}.rank .side{grid-column:2;align-items:flex-start;flex-direction:row;flex-wrap:wrap}}
+.cta{margin-top:24px;background:var(--band);color:var(--band-ink);border-radius:14px;padding:22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.cta p{margin:0;max-width:46ch}
+.cta a{background:var(--band-gold);color:#1B1405;text-decoration:none;font-weight:700;padding:11px 16px;border-radius:9px}
+.glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.glist a{display:flex;flex-direction:column;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;text-decoration:none;color:var(--ink)}
+.glist a:hover{border-color:var(--accent)}
+.glist b{font-size:1.04rem}
+.glist span{color:var(--muted);font-size:.9rem}
+.sec-h{font-family:var(--display);font-weight:400;font-size:1.4rem;margin:30px 0 12px}
+footer{border-top:1px solid var(--line)}
+footer .in{padding-block:18px 28px;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+</style>
+<!-- BODY -->
+<header class="band">
+  <canvas id="snow" aria-hidden="true"></canvas>
+  <div class="in">
+    <div class="top">
+      <a class="brand" href="#finder">Presents <em>Tense</em></a>
+      <nav aria-label="Main">
+        <a href="#finder" data-nav="finder">Gift finder</a>
+        <a href="#guides" data-nav="guides">Gift guides</a>
+        <a href="#stocking-stuffers" data-nav="stocking-stuffers">Stocking stuffers</a>
+      </nav>
+    </div>
+    <div class="hero" id="hero">
+      <span class="count" id="count"></span>
+      <h1>Find the gift. <em>Skip the panic.</em></h1>
+      <p>Take a 20-second quiz or just describe the person. We'll match them with gifts they'll actually use, not regift.</p>
+    </div>
+  </div>
+</header>
+<div class="ribbon" aria-hidden="true"></div>
+
+<main>
+  <div class="in">
+    <!-- FINDER VIEW -->
+    <section id="view-finder" class="grid">
+      <div class="tag" aria-label="Describe the person">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tab-text" aria-selected="true">Describe them</button>
+          <button role="tab" id="tab-quiz" aria-selected="false">Quick quiz</button>
+        </div>
+
+        <form id="describe">
+          <label class="lbl" for="desc">Who are you shopping for?</label>
+          <textarea id="desc" placeholder="My older brother, 26, just moved to Denver, loves skiing and craft beer, always cold, around $60"></textarea>
+          <p class="hint">Mention who they are, what they love or hate, and a budget. Weird details help.</p>
+          <div class="aiflag" id="aiflag" hidden><b>AI</b> Reads your description like a friend would</div>
+          <div class="examples" id="examples"></div>
+          <button class="go" id="goText" type="submit">Find their gift</button>
+        </form>
+
+        <form id="quiz" hidden>
+          <fieldset><legend>Who's it for?</legend><div class="chips" data-name="who" data-type="radio"></div></fieldset>
+          <fieldset><legend>Budget</legend><div class="chips" data-name="budget" data-type="radio"></div></fieldset>
+          <fieldset><legend>What are they into? (pick a few)</legend><div class="chips" data-name="tags" data-type="checkbox"></div></fieldset>
+          <fieldset><legend>Gift vibe</legend><div class="chips" data-name="vibe" data-type="radio"></div></fieldset>
+          <button class="go" type="submit">Find gifts</button>
+        </form>
+      </div>
+
+      <div class="shelf" aria-live="polite">
+        <div class="summary"><h2 id="resTitle"></h2><p id="resSub"></p></div>
+        <div class="cards" id="cards"></div>
+      </div>
+    </section>
+
+    <!-- GUIDES INDEX -->
+    <section id="view-guides" hidden>
+      <div class="gwrap" style="max-width:none">
+        <h1 class="sec-h" style="margin-top:0;font-size:2rem">Christmas gift guides</h1>
+        <p class="lede">Ranked picks for everyone on the list, from the dad who says he wants nothing to the Secret Santa you barely know.</p>
+        <div class="glist" id="glist" style="margin-top:18px"></div>
+      </div>
+    </section>
+
+    <!-- SINGLE GUIDE -->
+    <article id="view-guide" class="gwrap" hidden></article>
+  </div>
+</main>
+
+<footer><div class="in"><span>As an Amazon Associate, Presents Tense earns from qualifying purchases. Prices are typical ranges and change often.</span><span>© <span id="yr"></span> Presents Tense</span></div></footer>
+
+<script>
+// DATA-START
+const AFFILIATE_TAG = "presentstense-20";   // your Amazon Associates tag
+const SITE_NAME = "Presents Tense";
+
+const WHO = [["partner","Partner"],["mom","Mom"],["dad","Dad"],["sibling","Sibling"],["friend","Friend"],["coworker","Coworker"],["grandparent","Grandparent"],["college","College student"],["teen","Teen"],["kid","Kid"]];
+const BUDGET = [["15","Under $15",0,15],["25","Under $25",0,25],["50","$25–50",25,50],["100","$50–100",50,100],["200","$100+",100,9999],["any","Any",0,9999]];
+const TAGS = [["fitness","Fitness"],["running","Running"],["yoga","Yoga"],["outdoors","Outdoors"],["snow","Ski & snow"],["fishing","Fishing"],["cycling","Cycling"],["cooking","Cooking"],["baking","Baking"],["grilling","Grilling"],["treats","Sweets & snacks"],["coffee","Coffee & tea"],["drinks","Cocktails & wine"],["tech","Tech"],["gaming","Gaming"],["music","Music"],["movies","Movies & TV"],["reading","Reading"],["art","Art & crafts"],["games","Games & puzzles"],["photo","Photos & memories"],["travel","Travel"],["home","Home & cozy"],["selfcare","Self-care"],["beauty","Beauty"],["style","Style"],["jewelry","Jewelry"],["sports","Sports fan"],["golf","Golf"],["pets","Pets"],["plants","Plants"],["work","Work & desk"]];
+const VIBE = [["any","No preference"],["practical","Practical"],["fun","Fun"],["sentimental","Sentimental"],["fancy","Treat yourself"]];
+
+// [name, price, tags, good for (empty = anyone), vibe, blurb, amazon search]
+const G = [
+ ["Insulated stainless water bottle",30,["fitness","outdoors","travel","work"],[],"practical","Keeps ice for a full day. Somehow everyone needs another one.","insulated stainless water bottle 32 oz"],
+ ["Massage gun",90,["fitness","selfcare","sports","running"],["partner","dad","friend","sibling","college"],"practical","The thing they'd never buy themselves and then use every night.","percussion massage gun"],
+ ["Adjustable dumbbells",180,["fitness"],["partner","sibling","friend","dad"],"practical","A whole rack of weights in the space of a shoebox.","adjustable dumbbells set"],
+ ["Smart jump rope with counter",25,["fitness"],["teen","sibling","friend","college"],"fun","Counts jumps and calories, turns cardio into a score.","smart jump rope counter"],
+ ["Running belt phone pouch",18,["running","fitness"],[],"practical","Holds phone and keys without the bounce.","running belt phone pouch"],
+ ["Reflective vest with clip light",22,["running","cycling","fitness"],["partner","mom","dad","sibling"],"practical","For 5pm winter runs that are basically night runs.","reflective running vest led"],
+ ["Merino wool sock 3-pack",30,["running","outdoors","snow"],[],"practical","Warm, no blisters, never stink. Basically magic.","merino wool socks 3 pack"],
+ ["Non-slip yoga mat",45,["yoga","fitness","selfcare"],["partner","mom","sibling","friend"],"practical","Thick enough for knees, grippy enough for sweaty flows.","non slip yoga mat 6mm"],
+ ["Foam roller",25,["fitness","running","yoga"],[],"practical","Hurts so good. Every athlete's favorite enemy.","foam roller"],
+ ["Fitness tracker band",60,["fitness","tech","running"],["mom","dad","partner","teen"],"practical","Steps, sleep, heart rate. Gamifies the daily walk.","fitness tracker band"],
+ ["Packable down puffer vest",70,["outdoors","travel","style"],["dad","partner","sibling"],"practical","Stuffs into its own pocket. Great for people who are always cold.","packable down vest"],
+ ["Rechargeable headlamp",28,["outdoors","travel"],[],"practical","Camping, power outages, finding things behind the couch.","rechargeable headlamp"],
+ ["National parks scratch-off poster",30,["outdoors","travel","home"],[],"sentimental","Scratch off each park they visit. A goal on the wall.","national parks scratch off poster"],
+ ["Camping hammock with straps",40,["outdoors","travel"],["teen","sibling","friend","partner","college"],"fun","Two trees and a free afternoon away from bliss.","camping hammock with tree straps"],
+ ["Rechargeable hand warmers",30,["snow","outdoors","running"],[],"practical","Two pocket heaters for the person who's always cold.","rechargeable hand warmers 2 pack"],
+ ["Ski and snowboard goggles",70,["snow","outdoors"],["partner","sibling","teen","friend"],"practical","Anti-fog, wide view, better than squinting into flat light.","ski goggles anti fog"],
+ ["Insulated waterproof gloves",45,["snow","outdoors"],[],"practical","Shoveling, skiing, scraping the windshield at 7am.","insulated waterproof winter gloves"],
+ ["Fishing tackle starter kit",40,["fishing","outdoors"],["dad","grandparent","kid","teen"],"fun","Lures, hooks, and weights sorted in one box.","fishing tackle box kit"],
+ ["Fishing pliers multi-tool",30,["fishing"],["dad","grandparent","partner"],"practical","Cuts line, crimps, pulls hooks. Lives on the belt.","fishing pliers multitool"],
+ ["Bike phone mount",22,["cycling","tech"],[],"practical","Navigation on the handlebars, phone stays put on bumps.","bike phone mount"],
+ ["Rechargeable bike light set",30,["cycling"],[],"practical","Front and rear lights. Seen from a block away.","rechargeable bike light set"],
+ ["Backpacking cook set",35,["outdoors","cooking"],["dad","sibling","friend"],"practical","Pot, pan, and mug nested into one tiny bundle.","backpacking camping cookware set"],
+ ["Instant-read meat thermometer",35,["grilling","cooking"],["dad","partner","friend"],"practical","Ends the 'is it done yet' debate forever.","instant read meat thermometer"],
+ ["Grill tool set in a case",55,["grilling"],["dad","grandparent","partner"],"practical","Heavy-duty tongs, spatula, brush, all in one carry case.","bbq grill tool set case"],
+ ["Hot sauce sampler",30,["cooking","grilling","treats"],["dad","friend","sibling","coworker"],"fun","A flight of small-batch sauces from mild to regrettable.","hot sauce gift set sampler"],
+ ["Smoking wood chip sampler",22,["grilling"],["dad","partner"],"fun","Hickory, cherry, apple, mesquite. A flavor tour for the smoker.","smoking wood chips variety pack"],
+ ["Enameled cast iron Dutch oven",90,["cooking","home"],["mom","partner","grandparent"],"fancy","Soups, bread, braises. Looks great left out on the stove.","enameled cast iron dutch oven"],
+ ["Pasta-making kit",45,["cooking"],["partner","friend","sibling"],"fun","A date night in a box.","pasta maker machine kit"],
+ ["Personalized cutting board",45,["cooking","home"],["mom","grandparent","partner"],"sentimental","Their family name burned into the wood. Becomes an heirloom.","personalized engraved cutting board"],
+ ["Chef's knife",60,["cooking"],["partner","mom","dad","sibling","friend"],"practical","The one kitchen tool that makes every recipe easier.","8 inch chef knife"],
+ ["Compact espresso machine",180,["coffee"],["partner","mom","dad"],"fancy","Real espresso at home. Pays for itself in about 40 lattes.","compact espresso machine"],
+ ["Bestselling cookbook",30,["cooking","baking"],[],"practical","A crowd-favorite cookbook for the person who keeps cooking the same three dinners.","bestselling cookbook 2026"],
+ ["Coffee table book",40,["reading","travel"],[],"fancy","Beautiful photo book on a topic they love. Gets flipped through by every guest.","coffee table book"],
+ ["Digital kitchen scale",20,["baking","cooking"],[],"practical","Every good baker's secret: weigh it, don't scoop it.","digital kitchen scale grams"],
+ ["Sourdough bread baking kit",35,["baking","cooking"],["mom","partner","sibling","friend"],"fun","Proofing basket, scoring blade, the works.","sourdough bread baking kit banneton"],
+ ["Holiday cookie decorating set",22,["baking","treats"],["mom","kid","grandparent","partner"],"fun","Cutters, piping bags, sprinkles. Flour everywhere, worth it.","christmas cookie decorating kit"],
+ ["Air fryer",90,["cooking"],["college","mom","dad","sibling"],"practical","Crispy everything in 12 minutes. Dorm and apartment hero.","air fryer"],
+ ["World spice gift set",35,["cooking"],["mom","partner","friend","coworker"],"fancy","A dozen spices they'd never think to buy.","spice gift set"],
+ ["Pour-over coffee set",40,["coffee","home"],["partner","coworker","friend","dad"],"practical","Upgrades the morning ritual without a $600 espresso machine.","pour over coffee maker set"],
+ ["Coffee subscription (3 months)",60,["coffee"],[],"fancy","Fresh beans from a new roaster every month.","coffee subscription gift"],
+ ["Loose-leaf tea sampler",28,["coffee","selfcare"],["mom","grandparent","coworker"],"practical","A tin collection for slow afternoons.","loose leaf tea sampler gift set"],
+ ["Electric milk frother",20,["coffee"],[],"practical","Café lattes at home for twenty bucks.","handheld electric milk frother"],
+ ["Temperature-control smart mug",130,["coffee","tech","work"],["mom","partner","coworker","dad"],"fancy","Coffee stays hot through the entire 9am meeting.","temperature control smart mug"],
+ ["Hot cocoa bombs gift box",20,["treats","coffee"],["kid","teen","coworker","grandparent","friend"],"fun","Drop in hot milk, watch it explode into cocoa.","hot cocoa bombs gift box"],
+ ["Cocktail smoker kit",45,["drinks"],["dad","partner","friend"],"fun","Smoked old fashioneds at home. Instant party trick.","cocktail smoker kit"],
+ ["Whiskey glasses with ice molds",35,["drinks"],["dad","partner","coworker"],"fancy","Heavy glasses plus big slow-melting ice spheres.","whiskey glasses gift set ice molds"],
+ ["Homebrew beer kit",50,["drinks","cooking"],["sibling","friend","partner"],"fun","A one-gallon starter kit. Bragging rights in four weeks.","one gallon home brewing kit"],
+ ["Wine accessory gift set",30,["drinks"],["mom","partner","coworker","friend"],"fancy","Aerator, stopper, opener in a nice box.","wine accessories gift set"],
+ ["Cocktail shaker set",40,["drinks"],["partner","friend","sibling"],"fun","Shaker, jigger, strainer, and a recipe card or two.","cocktail shaker set bartender kit"],
+ ["Wireless earbuds",80,["tech","fitness","music","travel"],["teen","sibling","partner","friend","college"],"practical","Always a hit. Pick a pair with good noise cancelling.","wireless earbuds noise cancelling"],
+ ["Portable power bank",30,["tech","travel"],[],"practical","Rescues dead phones on trips and long days.","portable power bank fast charging"],
+ ["Smart tracker tags (4-pack)",90,["tech","travel"],["mom","dad","grandparent","partner"],"practical","Find keys, wallets, luggage. Peace of mind on a keyring.","bluetooth tracker tag 4 pack"],
+ ["Wi-Fi digital photo frame",100,["tech","photo","home"],["grandparent","mom"],"sentimental","Family sends photos from their phones, they show up on the frame.","wifi digital photo frame"],
+ ["Waterproof Bluetooth speaker",60,["music","outdoors","tech"],["teen","sibling","friend","college"],"fun","Beach, shower, tailgate. Survives all three.","waterproof bluetooth speaker"],
+ ["Bluetooth record player",120,["music","home"],["partner","sibling","friend"],"fancy","Pair it with one record you know they love.","bluetooth record player turntable"],
+ ["Controller charging dock",25,["gaming","tech"],["teen","sibling","kid","friend"],"practical","No more 'controller's dead' rage quits.","controller charging dock"],
+ ["Gaming headset",60,["gaming","tech"],["teen","sibling","friend","kid","college"],"practical","Clearer comms, fewer complaints from the rest of the house.","gaming headset"],
+ ["Retro handheld game console",55,["gaming","tech"],["sibling","friend","partner","teen"],"fun","Hundreds of classic games that fit in a pocket.","retro handheld game console"],
+ ["Mini movie projector",120,["movies","tech"],["teen","college","sibling","partner"],"fun","Movie nights on any wall, dorm or living room.","mini portable projector"],
+ ["3-in-1 charging stand",40,["tech","work"],[],"practical","Phone, watch, earbuds. One plug, no cable spaghetti.","3 in 1 wireless charging station"],
+ ["Sunrise alarm clock",45,["selfcare","tech","home"],["college","teen","partner","mom"],"practical","Wakes them with fake sunlight instead of a scream.","sunrise alarm clock"],
+ ["Beginner ukulele kit",60,["music"],["teen","kid","friend","partner"],"fun","Easiest instrument to learn. Three chords and they're playing songs.","beginner ukulele kit"],
+ ["Noise-cancelling headphones",200,["music","travel","tech","work"],["partner","college","sibling","dad"],"fancy","Silence on planes, trains, and open-plan offices.","noise cancelling headphones over ear"],
+ ["Kindle e-reader",110,["reading","travel","tech"],["mom","partner","grandparent","friend"],"fancy","A whole library in a jacket pocket.","kindle paperwhite"],
+ ["Rechargeable book light",20,["reading"],[],"practical","Read in bed without waking anyone up.","rechargeable book light"],
+ ["Personalized book embosser",35,["reading","home"],["mom","partner","grandparent"],"sentimental","'From the library of' pressed right into the pages.","custom book embosser"],
+ ["Book subscription box",40,["reading"],["mom","partner","friend"],"fancy","A surprise novel and a treat, delivered monthly.","book subscription box"],
+ ["Watercolor starter set",35,["art"],["mom","teen","kid","friend"],"fun","Quality paints and brushes to actually start the hobby.","watercolor paint set beginner"],
+ ["Embroidery kit",22,["art","selfcare"],["mom","sibling","friend","grandparent"],"fun","Relaxing, and they get wall art at the end.","beginner embroidery kit"],
+ ["Custom paint-by-numbers from a photo",35,["art","photo"],["mom","partner","grandparent","friend"],"sentimental","Their favorite photo turned into a weekend project.","custom paint by numbers from photo"],
+ ["Sketchbook and marker set",25,["art"],["kid","teen"],"fun","Alcohol markers that blend like the pros.","alcohol markers sketchbook set"],
+ ["Strategy board game",40,["games"],["sibling","friend","partner","teen","college"],"fun","Game night material that isn't Monopoly.","best strategy board game adults"],
+ ["Party card game",20,["games"],["friend","sibling","teen","coworker","college"],"fun","Quick rules, big laughs, fits in a pocket.","party card game adults"],
+ ["1000-piece jigsaw puzzle",22,["games","home"],["grandparent","mom","partner"],"fun","A coffee-table project for the week between Christmas and New Year's.","1000 piece jigsaw puzzle"],
+ ["Puzzle cube or fidget set",12,["games"],["kid","teen","coworker"],"fun","Desk toy, stocking stuffer, small-hands distraction.","speed cube puzzle"],
+ ["LEGO set",50,["games","art"],["kid","teen","sibling","partner"],"fun","Works on 8-year-olds and 38-year-olds equally.","lego set"],
+ ["Kids' science kit",30,["art","games"],["kid"],"fun","Volcanoes, crystals, slime. Messy in the right way.","kids science kit"],
+ ["Instant camera",80,["photo"],["teen","sibling","friend","partner","college"],"fun","Prints on the spot. Everyone wants a photo.","instant camera"],
+ ["Custom photo book",40,["photo","travel"],["mom","grandparent","partner"],"sentimental","A year of memories, bound and on the shelf.","custom photo book"],
+ ["Weighted blanket",60,["home","selfcare"],["partner","mom","sibling","friend","college"],"practical","Feels like a hug. Great for winter and stressful weeks.","weighted blanket"],
+ ["Heated throw blanket",50,["home","selfcare"],["grandparent","mom","partner"],"practical","For the person who keeps the thermostat at 74.","heated throw blanket"],
+ ["Candle-making kit",35,["home","art"],["friend","sibling","partner"],"fun","Make your own scents. Smells like an afternoon well spent.","candle making kit"],
+ ["Luxury scented candle",35,["home","selfcare"],["mom","coworker","partner","friend"],"fancy","Smells like a ski lodge, burns for 60 hours.","luxury scented candle"],
+ ["Silk pillowcase",30,["selfcare","beauty"],["mom","partner","sibling"],"fancy","A small luxury that feels big.","mulberry silk pillowcase"],
+ ["Spa gift set",40,["selfcare","beauty"],["mom","grandparent","coworker","partner"],"fancy","Bath soak, scrub, lotion. A night off in a box.","spa gift set"],
+ ["Shearling-lined slippers",50,["home","style"],["mom","dad","partner","grandparent"],"practical","Every year someone needs new slippers. This is the year.","shearling lined slippers"],
+ ["Hair dryer brush",60,["beauty"],["mom","sibling","partner","teen"],"practical","Salon blowout energy without the salon.","hair dryer brush"],
+ ["Lip and hand care set",15,["beauty","selfcare"],[],"practical","Winter-proofs hands and lips. Fits in any stocking.","hand cream lip balm gift set"],
+ ["Fragrance sampler set",40,["beauty","style"],["partner","sibling","friend"],"fancy","Ten tiny bottles to find a signature scent.","perfume cologne sampler set"],
+ ["Leather card wallet, monogrammed",40,["style","work"],["dad","partner","sibling"],"sentimental","Slim, durable, with their initials.","personalized leather card holder wallet"],
+ ["Cashmere-blend beanie",30,["style","outdoors","snow"],[],"practical","Soft enough to wear every day all winter.","cashmere beanie"],
+ ["Initial necklace",40,["jewelry","style"],["mom","partner","sibling","friend"],"sentimental","Dainty, personal, goes with everything.","gold initial necklace"],
+ ["Engraved coordinates bracelet",50,["jewelry"],["partner","mom","grandparent"],"sentimental","The coordinates of a place that matters to you both.","custom coordinates bracelet"],
+ ["Minimalist watch",100,["style","jewelry"],["partner","dad","sibling"],"fancy","Clean face, leather strap, looks twice the price.","minimalist watch leather strap"],
+ ["Novelty socks",12,["style"],[],"fun","A Christmas morning tradition for a reason.","funny novelty socks"],
+ ["Team jersey or hat",60,["sports"],["dad","sibling","friend","kid","teen"],"fun","Their team, their player. Hard to miss.","official team jersey"],
+ ["Stadium blanket in team colors",35,["sports","home"],["dad","grandparent","friend"],"fun","Game days, couch or bleachers.","sports team fleece blanket"],
+ ["Over-the-door mini basketball hoop",30,["sports","games"],["teen","college","kid","coworker"],"fun","Office or dorm, the trash talk is the same.","over the door mini basketball hoop"],
+ ["Golf ball personalization stamp",25,["golf"],["dad","grandparent","coworker"],"sentimental","Marks every ball as theirs. Cheap, clever, used constantly.","golf ball stamp personalized"],
+ ["Indoor putting mat",45,["golf","work"],["dad","coworker","grandparent"],"fun","Practice in the living room or the office.","indoor golf putting mat"],
+ ["Golf rangefinder",150,["golf","tech"],["dad","partner"],"fancy","The upgrade every weekend golfer secretly wants.","golf rangefinder"],
+ ["Custom pet portrait",45,["pets","art"],["mom","partner","friend","grandparent"],"sentimental","Their dog or cat as a painting. Guaranteed tears.","custom pet portrait"],
+ ["Dog puzzle toy",20,["pets"],[],"fun","Keeps the pup busy. Owner gets ten minutes of peace.","dog puzzle toy"],
+ ["Cat window perch",35,["pets"],[],"fun","Front-row seat to the bird channel.","cat window perch"],
+ ["Self-watering planter set",35,["plants","home"],["mom","partner","coworker","friend"],"practical","Keeps plants alive for people who forget.","self watering planter set"],
+ ["Indoor herb garden kit",25,["plants","cooking"],[],"fun","Basil and mint on the windowsill all winter.","indoor herb garden kit"],
+ ["Desk mat and cable organizer set",30,["work","tech"],["coworker","sibling","dad","college"],"practical","Cleans up the desk in five minutes.","desk mat cable organizer"],
+ ["Notebook and pen gift set",30,["work","art"],["coworker","teen","friend","college"],"practical","For people who still think best on paper.","leather notebook pen gift set"],
+ ["LED desk lamp with USB charging",35,["work","tech"],["college","teen","coworker"],"practical","Late-night studying without the headache.","led desk lamp usb charging"],
+ ["Laptop backpack",50,["work","travel","tech"],["college","teen","coworker","sibling"],"practical","Padded laptop sleeve, water-resistant, lots of pockets.","laptop backpack water resistant"],
+ ["Compact mini fridge",150,["home"],["college"],"practical","Cold drinks and leftovers without the trek to the kitchen.","compact mini fridge"],
+ ["Carry-on packing cubes",28,["travel"],[],"practical","Turns a messy suitcase into neat drawers.","packing cubes set"],
+ ["Movie night popcorn kit",25,["movies","treats"],["partner","friend","grandparent","sibling","coworker"],"fun","Popcorn varieties, seasonings, and classic boxes.","gourmet popcorn kernels seasoning gift set"],
+ ["Gourmet chocolate sampler",20,["treats"],[],"fancy","Small-batch bars from around the world.","gourmet chocolate bar gift set"],
+ ["Personalized Christmas ornament",15,["home","photo"],[],"sentimental","Their name and the year, hung every December for decades.","personalized christmas ornament 2026"],
+ ["Keychain multi-tool",15,["outdoors","tech"],["dad","sibling","friend"],"practical","Tiny screwdriver, bottle opener, blade. Used weekly.","keychain multi tool"],
+ ["Braided charging cable 3-pack",13,["tech"],[],"practical","Everyone's cable is frayed. Fix that.","braided usb c charging cable 3 pack"],
+ ["Premium playing cards",10,["games"],[],"fun","A nicer deck makes poker night feel high-stakes.","premium playing cards deck"],
+ ["Bath bomb set",14,["selfcare"],["mom","partner","sibling","friend","teen"],"fun","Fizzy, scented, and the bath becomes an event.","bath bomb gift set"],
+ ["Sheet mask variety pack",12,["beauty","selfcare"],["partner","sibling","friend","teen","mom"],"fun","Ten nights of looking ridiculous and feeling great.","sheet mask variety pack"],
+ ["Pocket notebook 3-pack",12,["work","art"],[],"practical","For grocery lists, big ideas, and everything between.","pocket notebook 3 pack"],
+ ["Flexible phone tripod",14,["photo","tech","travel"],["teen","college","friend","sibling"],"fun","Wraps around anything. Group photos without the arm.","flexible phone tripod"],
+ ["Catnip toy set",10,["pets"],[],"fun","Guaranteed cat zoomies by 10am Christmas morning.","catnip toys set"],
+ ["Smart LED bulb",12,["tech","home"],[],"fun","Any color, any brightness, controlled from the phone.","smart led light bulb color"],
+ ["Grandparent memory journal",25,["reading","photo"],["grandparent"],"sentimental","Prompts for their stories, kept for the family.","grandparent memory journal"],
+];
+
+const GUIDES = [
+ {slug:"gifts-for-dad",nav:"Dad",title:"Christmas Gifts for Dad (2026)",h1:"Christmas gifts for the dad who says he wants nothing",intro:"He says he doesn't need anything. He's wrong. These are gifts dads actually use, from the grill to the golf course to the garage, ranked by how often they'll get pulled out after Christmas.",q:{who:"dad",tags:["grilling","golf","tech","outdoors","drinks","sports","fishing"],budget:"any"}},
+ {slug:"gifts-for-mom",nav:"Mom",title:"Christmas Gifts for Mom (2026)",h1:"Christmas gifts for Mom that beat another candle",intro:"Thoughtful, useful, and a little indulgent. These picks lean cozy and personal, with a few practical upgrades she'd never buy for herself.",q:{who:"mom",tags:["home","selfcare","cooking","baking","reading","plants","jewelry","photo"],budget:"any"}},
+ {slug:"gifts-for-boyfriend",nav:"Boyfriend",title:"Christmas Gifts for Your Boyfriend (2026)",h1:"Christmas gifts for your boyfriend, ranked",intro:"Gifts that land whether he's a gym rat, a gamer, or a weekend grill master. Skip the cologne guesswork and pick something he'll use daily.",q:{who:"partner",tags:["tech","gaming","fitness","sports","drinks","grilling","music","style"],budget:"any"}},
+ {slug:"gifts-for-girlfriend",nav:"Girlfriend",title:"Christmas Gifts for Your Girlfriend (2026)",h1:"Christmas gifts for your girlfriend she'll actually love",intro:"A mix of sentimental and treat-yourself gifts, from jewelry with meaning to cozy upgrades for the long winter.",q:{who:"partner",tags:["jewelry","beauty","selfcare","home","reading","coffee","photo","style"],budget:"any"}},
+ {slug:"secret-santa-under-25",nav:"Secret Santa",title:"Secret Santa Gifts Under $25 (2026)",h1:"Secret Santa gifts under $25 that don't feel cheap",intro:"You drew a name you barely know and have a $25 cap. These are safe, crowd-pleasing picks that still look like you tried.",q:{who:"coworker",tags:["treats","coffee","work","games","home"],budget:"25"}},
+ {slug:"stocking-stuffers",nav:"Stocking stuffers",title:"Stocking Stuffers Under $15 (2026)",h1:"Stocking stuffers under $15 that won't end up in a drawer",intro:"Small, cheap, and genuinely useful. Every pick here fits in a stocking and costs less than a movie ticket.",q:{who:null,tags:[],budget:"15"}},
+ {slug:"gifts-for-grandparents",nav:"Grandparents",title:"Christmas Gifts for Grandparents (2026)",h1:"Christmas gifts for grandparents that keep the family close",intro:"Grandparents rarely want more stuff. They want connection, comfort, and photos of the grandkids. These picks deliver all three.",q:{who:"grandparent",tags:["photo","home","reading","games","coffee"],budget:"any"}},
+ {slug:"gifts-for-teens",nav:"Teens",title:"Christmas Gifts for Teens (2026)",h1:"Christmas gifts teens won't roll their eyes at",intro:"Tested against the most brutal critics on Earth. Tech, games, and room upgrades that earn at least a 'thanks, this is actually cool.'",q:{who:"teen",tags:["tech","gaming","music","art","photo","sports"],budget:"any"}},
+ {slug:"gifts-for-college-students",nav:"College students",title:"Christmas Gifts for College Students (2026)",h1:"Christmas gifts for college students, dorm-tested",intro:"Small rooms, early classes, no money. These gifts solve real college problems, from 8am alarms to dead phones to cafeteria fatigue.",q:{who:"college",tags:["tech","work","cooking","home","fitness","movies"],budget:"any"}},
+ {slug:"gifts-for-people-who-have-everything",nav:"Has everything",title:"Gifts for People Who Have Everything (2026)",h1:"Gifts for the person who has everything",intro:"When they already own it all, go personal or go consumable. These picks are either one of a kind or get used up and enjoyed.",q:{who:null,tags:["photo","treats","coffee","drinks","pets"],budget:"any",vibe:"sentimental"}},
+];
+
+// free-text keyword fallback
+const KW = {
+ fitness:["gym","lift","lifting","lifts","workout","workouts","crossfit","fit","fitness","athlete","exercise","pilates","peloton","bodybuilding"],
+ running:["run","running","runner","marathon","5k","10k","jog","jogging"],
+ yoga:["yoga","stretching","meditation","meditate"],
+ outdoors:["hike","hiking","camp","camping","outdoors","outdoor","outdoorsy","climb","climbing","nature","kayak","beach","mountains","hunting"],
+ snow:["ski","skiing","skier","snowboard","snowboarding","snow","winter","cold","always cold"],
+ fishing:["fish","fishing","fisherman","angler"],
+ cycling:["bike","biking","cycling","cyclist"],
+ cooking:["cook","cooking","chef","kitchen","foodie","pasta","recipes","spicy"],
+ baking:["bake","baking","baker","bread","sourdough","cookies","cakes"],
+ grilling:["grill","grilling","bbq","barbecue","smoker","steak","meat"],
+ treats:["chocolate","candy","snacks","snack","sweet tooth","sweets","dessert"],
+ coffee:["coffee","espresso","latte","tea","caffeine","cocoa"],
+ drinks:["beer","whiskey","bourbon","wine","cocktail","cocktails","drinks","brewing","scotch","tequila"],
+ tech:["tech","gadget","gadgets","phone","computer","engineer","coder","programmer","nerd","techie"],
+ gaming:["gaming","gamer","video games","videogames","xbox","playstation","ps5","nintendo","switch","fortnite","minecraft"],
+ music:["music","concert","concerts","vinyl","guitar","band","singer","spotify","records","swiftie"],
+ movies:["movie","movies","film","films","tv","netflix","shows","binge"],
+ reading:["read","reading","reader","books","book","novels","bookworm","library"],
+ art:["art","artist","paint","painting","draw","drawing","craft","crafts","crafty","creative","knit","knitting","sewing"],
+ games:["board games","board game","card games","puzzle","puzzles","game night","lego","legos"],
+ photo:["photo","photos","photography","camera","pictures","memories","family","nostalgic","sentimental"],
+ travel:["travel","traveling","traveler","trip","trips","flies","flying","vacation","adventure","abroad"],
+ home:["home","cozy","homebody","decor","apartment","house","couch","candles","nesting"],
+ selfcare:["relax","relaxing","stress","stressed","spa","self care","self-care","bath","sleep","tired","overworked","burned out"],
+ beauty:["skincare","makeup","beauty","hair","perfume","cologne","fragrance"],
+ style:["fashion","style","stylish","clothes","dresser","sneakers","outfits"],
+ jewelry:["jewelry","necklace","bracelet","earrings","rings","watch","watches"],
+ sports:["sports","football","basketball","baseball","hockey","soccer","fan","team","patriots","celtics","red sox","bruins","nfl","nba","yankees"],
+ golf:["golf","golfer","golfing"],
+ pets:["dog","dogs","cat","cats","pet","pets","puppy","kitten"],
+ plants:["plant","plants","garden","gardening","gardener","flowers"],
+ work:["work","office","desk","remote","wfh","busy","job","boss","intern","banker","lawyer","consultant","student","studying"],
+};
+const WHOKW = {partner:["girlfriend","boyfriend","wife","husband","partner","fiance","fiancee","spouse"],mom:["mom","mother","mum","stepmom"],dad:["dad","father","pops","stepdad"],grandparent:["grandma","grandpa","grandmother","grandfather","nana","grandparent","grandparents"],college:["college","freshman","dorm","university","sophomore"],coworker:["coworker","co-worker","boss","colleague","secret santa","manager"],sibling:["brother","sister","sibling"],friend:["friend","roommate","buddy","bestie","teammate"],teen:["teen","teenager","nephew","niece","high school"],kid:["kid","son","daughter","child","toddler","grandson","granddaughter"]};
+const VIBEKW = {sentimental:["sentimental","meaningful","personal","personalized"],fancy:["luxury","fancy","splurge","treat"],fun:["fun","funny","silly","joke","gag"],practical:["practical","useful"]};
+// DATA-END
+
+const gHref = slug => window.STATIC_GUIDES ? `/${slug}/` : `#${slug}`;
+const link = q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}&tag=${AFFILIATE_TAG}`;
+const labelOf = (arr,k)=> (arr.find(a=>a[0]===k)||[,k])[1];
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- scoring ----------
+function score(q, opts={}){
+  const b = BUDGET.find(x=>x[0]===q.budget)||BUDGET[5];
+  const tags=q.tags||[];
+  return G.map((g,id)=>{
+    const [,price,gt,who,vibe]=g;
+    if(price>b[3]*1.1) return null;
+    const hits = gt.filter(t=>tags.includes(t));
+    if(q.who && who.length && !who.includes(q.who)) { if(opts.guide) return null; }
+    let s = hits.length*4;
+    if(q.who){ s += !who.length ? 1 : who.includes(q.who) ? 2.5 : -3; }
+    if(q.vibe && q.vibe!=="any" && vibe===q.vibe) s+=2;
+    if(b[0]!=="any" && price>=b[2]) s+=0.6;
+    s += Math.min(price,150)/150; // pricier picks earn more per click
+    return {id,s,hits};
+  }).filter(x=>x && (opts.guide || tags.length===0 || x.hits.length>0))
+    .sort((a,b2)=>b2.s-a.s || G[b2.id][1]-G[a.id][1]).slice(0,opts.limit||9);
+}
+
+function parseText(txt){
+  const t=" "+txt.toLowerCase().replace(/[^\w$\s'-]/g," ").replace(/\s+/g," ")+" ";
+  const has=w=>t.includes(" "+w+" ")||t.includes(" "+w+"s ");
+  const tags=Object.keys(KW).filter(k=>KW[k].some(has));
+  let who=null; for(const k in WHOKW){ if(WHOKW[k].some(has)){who=k;break;} }
+  let vibe="any"; for(const k in VIBEKW){ if(VIBEKW[k].some(has)){vibe=k;break;} }
+  let budget="any";
+  const re=/\$\s?(\d{1,4})|(\d{1,4})\s?(?:dollars|bucks)|(?:under|around|budget|max|up to|less than|about)\s(?:of\s)?\$?(\d{1,4})/g;
+  let mm, nums=[];
+  while((mm=re.exec(t))) nums.push(parseInt(mm[1]||mm[2]||mm[3]));
+  nums=nums.filter(n=>n>=5);
+  if(nums.length){ const n=Math.max(...nums); budget = n<=15?"15":n<=25?"25":n<=50?"50":n<=100?"100":"200"; }
+  return {who,tags,vibe,budget};
+}
+
+// ---------- AI matching ----------
+// Inside Claude: uses the viewer's Claude. On your own site: POSTs to /api/gift-match (see netlify/functions). Otherwise keyword fallback.
+const samplePromise = (window.claude && claude.use) ? claude.use("sample").catch(()=>null) : Promise.resolve(null);
+let aiOff=false;
+samplePromise.then(s=>{ if(s) $("#aiflag").hidden=false; });
+
+function aiPrompt(txt){
+  const cat=G.map((g,i)=>`${i}|${g[0]}|$${g[1]}|${g[2].join(",")}|${g[3].join(",")||"anyone"}`).join("\n");
+  return `You match Christmas gifts. A shopper described the person they're buying for:
+"""${txt.slice(0,900)}"""
+
+Choose the 8 best gifts ONLY from this catalog (id|name|typical price|interests|good for). Rules: respect any stated budget (at most 10% over); never pick something that clashes with the description (no alcohol for kids, nothing for a hobby they dislike); favor variety over 8 near-duplicates; order best first.
+
+${cat}
+
+Reply with only JSON in this shape:
+{"summary":"Shopping for <short description of the person, under 12 words>","picks":[{"id":12,"why":"one reason under 14 words, specific to this person"}]}`;
+}
+
+async function aiMatch(txt){
+  if(aiOff) return null;
+  const prompt=aiPrompt(txt);
+  let data=null;
+  const sample=await samplePromise;
+  if(sample){
+    try{ data=await sample.json(prompt,{modelTier:"quick"}); }
+    catch(e){ if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)) aiOff=true; return null; }
+  } else {
+    try{
+      const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),25000);
+      const r=await fetch("/api/gift-match",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({description:txt}),signal:ctl.signal});
+      clearTimeout(tm);
+      if(!r.ok){ if(r.status===404) aiOff=true; return null; }
+      const {text}=await r.json(); const a=text.indexOf("{"), z=text.lastIndexOf("}");
+      data=JSON.parse(text.slice(a,z+1));
+    }catch(e){ aiOff=true; return null; }
+  }
+  if(!data || !Array.isArray(data.picks)) return null;
+  const seen=new Set(), picks=[];
+  for(const p of data.picks){ const id=Number(p.id); if(Number.isInteger(id)&&G[id]&&!seen.has(id)){seen.add(id);picks.push({id,why:String(p.why||"").slice(0,140)});} if(picks.length>=9)break; }
+  return picks.length>=3 ? {summary:String(data.summary||"").slice(0,120),picks} : null;
+}
+
+// ---------- rendering ----------
+function card(id,i,whyHtml){
+  const [name,price,,,,blurb,query]=G[id];
+  return `<article class="card${i===0?" top":""}" style="animation-delay:${i*40}ms">
+    <div class="row"><span class="price">~$${price}</span>${i===0?'<span class="badge">Top pick</span>':""}</div>
+    <h3>${esc(name)}</h3><p>${esc(blurb)}</p>
+    <div class="why">${whyHtml}</div>
+    <a class="buy" href="${link(query)}" target="_blank" rel="noopener sponsored">See it on Amazon ↗</a>
+  </article>`;
+}
+function showResults(title,sub,html){ $("#resTitle").textContent=title; $("#resSub").textContent=sub; $("#cards").innerHTML=html; }
+
+function renderScored(q, note){
+  const res=score(q);
+  const who=q.who?labelOf(WHO,q.who).toLowerCase():null;
+  const bits=[];
+  if(q.tags.length) bits.push(q.tags.map(t=>labelOf(TAGS,t).toLowerCase()).join(", "));
+  const b=BUDGET.find(x=>x[0]===q.budget); if(b && b[0]!=="any") bits.push(b[1]);
+  if(q.vibe && q.vibe!=="any") bits.push(labelOf(VIBE,q.vibe).toLowerCase());
+  if(!res.length){ showResults("Nothing fits yet","",`<div class="empty">No gifts match that combo. Try a bigger budget or a broader interest.</div>`); return; }
+  showResults(`${res.length} picks for ${who?"your "+who:"them"}`, note || bits.join(" · "),
+    res.map((r,i)=>card(r.id,i, r.hits.length?`Matches <b>${r.hits.map(t=>esc(labelOf(TAGS,t).toLowerCase())).join(" + ")}</b>`:`A safe bet for ${esc(who||"anyone")}`)).join(""));
+}
+
+function readQuiz(){
+  const f=$("#quiz"); const v=n=>(f.querySelector(`input[name="${n}"]:checked`)||{}).value;
+  return {who:v("who"),budget:v("budget")||"any",vibe:v("vibe")||"any",tags:[...f.querySelectorAll('input[name="tags"]:checked')].map(i=>i.value)};
+}
+
+async function runDescribe(txt){
+  const btn=$("#goText"); btn.disabled=true; btn.textContent="Finding their gift…";
+  const useAI = !aiOff && (await Promise.race([samplePromise, new Promise(r=>setTimeout(()=>r("wait"),50))])) !== null;
+  if(useAI){ showResults("Reading your description…","",`<div class="thinking"><span class="dot"></span>Matching against ${G.length} gifts</div>`); scrollResults(); }
+  const ai = await aiMatch(txt);
+  btn.disabled=false; btn.textContent="Find their gift";
+  if(ai){
+    showResults(`${ai.picks.length} picks, matched by AI`, ai.summary, ai.picks.map((p,i)=>card(p.id,i,`<b>Why:</b> ${esc(p.why)}`)).join(""));
+  } else {
+    const q=parseText(txt);
+    const bits=[]; if(q.who) bits.push(labelOf(WHO,q.who).toLowerCase()); if(q.tags.length) bits.push(q.tags.map(t=>labelOf(TAGS,t).toLowerCase()).join(", ")); if(q.budget!=="any") bits.push(labelOf(BUDGET,q.budget));
+    renderScored(q, "Picked up on: "+(bits.join(" · ")||"not much. Try naming hobbies and a budget."));
+  }
+  scrollResults();
+}
+function scrollResults(){ if(window.innerWidth<820) $(".shelf").scrollIntoView({behavior:"smooth",block:"start"}); }
+
+function buildChips(){
+  const src={who:WHO,budget:BUDGET,tags:TAGS,vibe:VIBE};
+  document.querySelectorAll(".chips[data-name]").forEach(box=>{
+    const n=box.dataset.name,t=box.dataset.type;
+    box.innerHTML=src[n].map(([k,l])=>`<input type="${t}" name="${n}" id="${n}-${k}" value="${k}"><label for="${n}-${k}">${l}</label>`).join("");
+  });
+}
+function setTab(which){
+  const quiz=which==="quiz";
+  $("#tab-quiz").setAttribute("aria-selected",quiz); $("#tab-text").setAttribute("aria-selected",!quiz);
+  $("#quiz").hidden=!quiz; $("#describe").hidden=quiz;
+}
+
+// ---------- guides ----------
+function renderGuideList(){
+  $("#glist").innerHTML=GUIDES.map(g=>`<a href="${gHref(g.slug)}"><b>${esc(g.h1)}</b><span>${score(g.q,{guide:true,limit:12}).length} ranked picks</span></a>`).join("");
+}
+function renderGuide(g){
+  const res=score(g.q,{guide:true,limit:12});
+  const others=GUIDES.filter(x=>x!==g).slice(0,6);
+  $("#view-guide").innerHTML=`
+    <div class="crumb"><a href="#guides">Gift guides</a> / ${esc(g.nav)}</div>
+    <h1>${esc(g.h1)}</h1>
+    <p class="lede">${esc(g.intro)}</p>
+    <div class="meta">Updated for Christmas ${new Date().getFullYear()} · ${res.length} picks</div>
+    <ol class="rank">${res.map(r=>{const [name,price,,,,blurb,query]=G[r.id];return `<li><div><h3>${esc(name)}</h3><p>${esc(blurb)}</p></div><div class="side"><span class="price">~$${price}</span><a class="buy" href="${link(query)}" target="_blank" rel="noopener sponsored">See it ↗</a></div></li>`}).join("")}</ol>
+    <div class="cta"><p><b>Not quite them?</b> Describe the person in a sentence and we'll match gifts to their actual personality.</p><a href="#finder">Try the gift finder</a></div>
+    <h2 class="sec-h">More gift guides</h2>
+    <div class="glist">${others.map(o=>`<a href="${gHref(o.slug)}"><b>${esc(o.h1)}</b></a>`).join("")}</div>`;
+}
+
+// ---------- routing ----------
+function route(){
+  const h=(location.hash||"#finder").slice(1);
+  const g=GUIDES.find(x=>x.slug===h);
+  const view = g ? "guide" : (h==="guides" ? "guides" : "finder");
+  $("#view-finder").hidden = view!=="finder";
+  $("#view-guides").hidden = view!=="guides";
+  $("#view-guide").hidden = view!=="guide";
+  $("#hero").hidden = view!=="finder";
+  if(g) renderGuide(g);
+  document.querySelectorAll("nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.nav===(g?g.slug:view)?"page":"false"));
+  if(view!=="finder") window.scrollTo(0,0);
+}
+
+// ---------- snow ----------
+function snow(){
+  const c=$("#snow"), ctx=c.getContext("2d"); let W,H,flakes;
+  const still=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){ const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2); W=r.width;H=r.height;c.width=W*d;c.height=H*d;ctx.setTransform(d,0,0,d,0,0);
+    flakes=Array.from({length:Math.round(W/14)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+.6,v:Math.random()*.5+.25,w:Math.random()*6.28})); }
+  function draw(){ ctx.clearRect(0,0,W,H); ctx.fillStyle="rgba(243,239,228,.55)";
+    for(const f of flakes){ ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,6.28); ctx.fill();
+      if(!still){ f.y+=f.v; f.w+=.01; f.x+=Math.sin(f.w)*.3; if(f.y>H+4){f.y=-4;f.x=Math.random()*W;} } }
+    if(!still) requestAnimationFrame(draw); }
+  size(); addEventListener("resize",()=>{size(); if(still) draw();}); draw();
+}
+
+// ---------- init ----------
+const EX=["My dad, 58, loves grilling and golf but hates gadgets, under $60","Girlfriend who's always cold, reads a ton, obsessed with her cat, around $50","Secret Santa for a coworker I barely know, $25 max","College roommate who lives on iced coffee and never sleeps"];
+$("#examples").innerHTML=EX.map(e=>`<button type="button">${esc(e)}</button>`).join("");
+$("#examples").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#desc").value=b.textContent; runDescribe(b.textContent);});
+$("#tab-quiz").onclick=()=>setTab("quiz"); $("#tab-text").onclick=()=>setTab("text");
+$("#quiz").addEventListener("submit",e=>{e.preventDefault();renderScored(readQuiz());scrollResults();});
+$("#describe").addEventListener("submit",e=>{e.preventDefault();const t=$("#desc").value.trim();if(!t){$("#desc").focus();return;}runDescribe(t);});
+
+(function(){ const now=new Date(),x=new Date(now.getFullYear(),11,25); if(now>x)x.setFullYear(x.getFullYear()+1);
+  const d=Math.ceil((x-now)/864e5); $("#count").textContent = d===0?"It's Christmas. Gift cards it is.":`${d} days until Christmas`; $("#yr").textContent=now.getFullYear(); })();
+
+buildChips(); renderGuideList();
+["who-dad","budget-100","tags-grilling","tags-golf","vibe-any"].forEach(id=>document.getElementById(id).checked=true);
+renderScored(readQuiz(),"Example: dad · grilling, golf · $50–100. Describe your person to get your own.");
+addEventListener("hashchange",route); route(); snow();
+</script>
