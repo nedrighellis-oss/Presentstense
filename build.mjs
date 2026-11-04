@@ -57,7 +57,7 @@ const band = `<header class="band"><div class="in"><div class="top">
 <a class="brand" href="/">Presents <em>Tense</em></a>
 <nav aria-label="Main"><a href="/">Gift finder</a><a href="/#guides">Gift guides</a><a href="/stocking-stuffers/">Stocking stuffers</a></nav>
 </div></div></header><div class="ribbon" aria-hidden="true"></div>`;
-const foot = `<footer><div class="in"><span>As an Amazon Associate, ${SITE_NAME} earns from qualifying purchases. Prices are typical ranges and change often.</span><span>© ${year} ${SITE_NAME}</span></div></footer>`;
+const foot = `<footer><div class="in"><span>As an Amazon Associate, ${SITE_NAME} earns from qualifying purchases. Prices are typical ranges and change often.</span><span><a href="/#feedback" style="color:inherit">Send feedback</a> · © ${year} ${SITE_NAME}</span></div></footer>`;
 
 for (const g of GUIDES) {
   const res = score(g.q, { guide: true, limit: 12 });

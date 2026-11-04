@@ -10,6 +10,12 @@
 3. Site settings > Environment variables: add `ANTHROPIC_API_KEY` (from console.anthropic.com). This powers the AI "describe them" box. Without it, the box falls back to keyword matching automatically.
 4. Connect your domain, then submit `https://yourdomain.com/sitemap.xml` in Google Search Console.
 
+## Feedback form
+Feedback submissions land in Netlify under **Forms > feedback**.
+- If the Forms page says form detection is off, click **Enable form detection**, then redeploy once.
+- Under **Forms > Form notifications**, add an email notification to get each note in your inbox.
+- The free plan has a monthly submission cap, which is plenty at this size.
+
 ## Editing
 - Gifts, guides, and keywords all live between `// DATA-START` and `// DATA-END` in `index.html`.
 - Each gift: `[name, price, interests, good-for, vibe, blurb, amazon search]`.
